@@ -1,5 +1,6 @@
-import { Hono } from "https://deno.land/x/hono@v3.10.0/mod.ts";
+import { Hono, HonoRequest } from "https://deno.land/x/hono@v3.10.0/mod.ts";
 import { html } from "https://deno.land/x/hono@v3.10.0/helper.ts";
+import { getHeaders } from "./util.ts";
 
 const app = new Hono();
 const nejire_url = "http://nejiten.halfmoon.jp/";
@@ -24,58 +25,24 @@ app.get("/", (c) => {
   `);
 });
 
-app.get("*", (c) => {
-  const url = c.req.url;
-  const new_url = nejire_url + url.replace(base_url, "");
-
-  const cookies = c.req.raw.headers.get("Cookie") as string;
-  const login_cookie = getCookieValue(cookies, "login") as string;
-  const headers = new Headers();
-  headers.append("Cookie", `login=${login_cookie}`);
-
-  return fetch(new_url, { headers: headers });
+app.get("*", async (c) => {
+  return await proxyRequest(c.req.url.replace(base_url, ""), c.req);
 });
 
 app.post("*", async (c) => {
-  const url = c.req.url;
-  const new_url = nejire_url + url.replace(base_url, "");
-
-  const cookies = c.req.raw.headers.get("Cookie") as string;
-  const login_cookie = getCookieValue(cookies, "login") as string;
-  const headers = new Headers();
-  headers.append("Cookie", `login=${login_cookie}`);
-
-  const body = await c.req.arrayBuffer();
-
-  return fetch(new_url, {
-    headers: headers,
-    body: body,
-    method: "POST",
-    redirect: "manual",
-  });
+  return await proxyRequest(c.req.url.replace(base_url, ""), c.req);
 });
 
-function getCookieValue(cookieString: string, key: string) {
-  // Cookie文字列をセミコロンで分割
-  let cookies: string[] = [];
-  try {
-    cookies = cookieString.split(";");
-  } catch (_error) {
-    console.error("Cookieのパースに失敗しました");
-    return null;
-  }
+async function proxyRequest(url: string, req: HonoRequest) {
+  const headers = getHeaders(req.raw.headers.get("Cookie") as string);
+  const body = req.method === "POST" ? await req.arrayBuffer() : null;
 
-  // キーを検索して値を取得
-  for (let i = 0; i < cookies.length; i++) {
-    const cookie = cookies[i].trim();
-    // キーが見つかったら値を返す
-    if (cookie.startsWith(key + "=")) {
-      return cookie.substring(key.length + 1);
-    }
-  }
-
-  // キーが見つからない場合はnullを返す
-  return null;
+  return fetch(`${nejire_url}${url}`, {
+    headers,
+    body,
+    method: req.method,
+    redirect: "manual",
+  });
 }
 
 Deno.serve(app.fetch);
