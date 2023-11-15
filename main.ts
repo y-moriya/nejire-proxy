@@ -5,7 +5,6 @@ const app = new Hono();
 const nejire_url = "http://nejiten.halfmoon.jp/";
 const base_url = Deno.env.get("BASE_URL") || "http://localhost:8000/";
 
-// TODO: 注意書きページつくる
 app.get("/", (c) => {
   return c.html(html`
     <html>
