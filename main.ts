@@ -61,9 +61,8 @@ function getCookieValue(cookieString: string, key: string) {
   let cookies: string[] = [];
   try {
     cookies = cookieString.split(";");
-  } catch (error) {
+  } catch (_error) {
     console.error("Cookieのパースに失敗しました");
-    console.error(error);
     return null;
   }
 
