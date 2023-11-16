@@ -2,7 +2,7 @@ function splitCookies(cookieString: string) {
   try {
     return cookieString.split(";");
   } catch (_error) {
-    console.error("Cookie parse failed");
+    // console.error("Cookie parse failed");
     return [];
   }
 }
