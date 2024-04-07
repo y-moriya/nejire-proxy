@@ -1,48 +1,44 @@
-import { Hono, HonoRequest } from "https://deno.land/x/hono@v3.10.0/mod.ts";
+import { Hono } from "https://deno.land/x/hono@v3.10.0/mod.ts";
 import { html } from "https://deno.land/x/hono@v3.10.0/helper.ts";
-import { getHeaders } from "./util.ts";
 
 const app = new Hono();
-const nejire_url = "http://nejiten.halfmoon.jp/";
+const nejire_url = "https://nejiten.halfmoon.jp/";
 const base_url = Deno.env.get("BASE_URL") || "http://localhost:8000/";
 
 app.get("/", (c) => {
   return c.html(html`
-    <html>
-      <head>
-        <title>Nejire Proxy</title>
-      </head>
-      <body>
-        ねじれ天国にアクセスできない人のためのProxyサイトです。<br>
-        仕組み上、ログイン情報が管理者(ねじれ天国の管理者とは異なる)に駄々洩れですので、<br>
-        理解したうえでご利用は自己責任でお願いします。<br>
-        <br>
-        <a href="/index.cgi">ねじれ天国(Proxy)トップへ</a>
-        <br><br>
-        管理: @euro_s
-      </body>
-    </html>
+  <html>
+    <head>
+      <title>【閉鎖】Nejire Proxy</title>
+    </head>
+    <body>
+      ねじれ天国本サイトのSSL対応(https化)に伴い、本Proxyサイトは閉鎖しました。<br>
+      <br><br>
+      <a href="${nejire_url}index.cgi">ねじれ天国トップへ</a>
+      <br><br>
+      管理: @euro_s
+    </body>
+  </html>
   `);
 });
 
-app.get("*", async (c) => {
-  return await proxyRequest(c.req.url.replace(base_url, ""), c.req);
+app.get("*", (c) => {
+  return c.html(html`
+  <html>
+    <head>
+      <title>【閉鎖】Nejire Proxy</title>
+    </head>
+    <body>
+      ねじれ天国本サイトのSSL対応(https化)に伴い、本Proxyサイトは閉鎖しました。<br>
+      あなたがアクセスしようとしたページは以下のURLです。<br>
+      <a href="${c.req.url.replace(base_url, nejire_url)}">${c.req.url.replace(base_url, nejire_url)}</a>
+      <br><br>
+      <a href="${nejire_url}index.cgi">ねじれ天国トップへ</a>
+      <br><br>
+      管理: @euro_s
+    </body>
+  </html>
+  `);
 });
-
-app.post("*", async (c) => {
-  return await proxyRequest(c.req.url.replace(base_url, ""), c.req);
-});
-
-async function proxyRequest(url: string, req: HonoRequest) {
-  const headers = getHeaders(req.raw.headers.get("Cookie") as string);
-  const body = req.method === "POST" ? await req.arrayBuffer() : null;
-
-  return fetch(`${nejire_url}${url}`, {
-    headers,
-    body,
-    method: req.method,
-    redirect: "manual",
-  });
-}
 
 Deno.serve(app.fetch);
